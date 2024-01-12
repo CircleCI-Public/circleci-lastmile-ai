@@ -1,0 +1,23 @@
+version: 2.1
+
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/configuration-reference/#jobs
+jobs:
+  build-app:
+    docker:
+      - image: cimg/node:21.5.0
+    steps:
+      - checkout
+      - run:
+          name: Install deps
+          command: yarn install
+      - run:
+          name: Run the config
+          command: npx ts-node app.ts
+    
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/configuration-reference/#workflows
+workflows:
+  build-test-deploy:
+    jobs:
+      - build-app
