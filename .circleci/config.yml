@@ -20,4 +20,5 @@ jobs:
 workflows:
   build-test-deploy:
     jobs:
-      - build-app
+      - build-app:
+          context: ai-eval-examples
