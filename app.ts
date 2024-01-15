@@ -70,7 +70,7 @@ async function main() {
   console.log("User input: ", user_input);
   const config = AIConfigRuntime.load("book_db_function_calling.aiconfig.json");
 
-  const params = { user_input: user_input };
+  const params = { the_query: user_input };
 
   // Run recommend_book prompt with gpt-3.5 and determine right function to call based on user question
   const completion = await config.run("get_book_info", params);
