@@ -249,7 +249,7 @@ agentkeepalive@^4.2.1:
   dependencies:
     humanize-ms "^1.2.1"
 
-aiconfig@^1.0.0:
+aiconfig@^1.1.5:
   version "1.1.5"
   resolved "https://registry.yarnpkg.com/aiconfig/-/aiconfig-1.1.5.tgz#9bc9a608f0b6e4dfda2fefc4da4a97feb0ea45d7"
   integrity sha512-b/UbUE504w+5wc90JhvJd/f0lnolbwkcVcK2VuP2+mv1ryBmNW71AxDanf1v+sh8iuRkhPH7pShkUcvncVUxSA==
