@@ -1,4 +1,9 @@
-import { AIConfigRuntime, ExecuteResult, Prompt, OutputDataWithToolCallsValue } from "aiconfig";
+import {
+  AIConfigRuntime,
+  ExecuteResult,
+  Prompt,
+  OutputDataWithToolCallsValue,
+} from "aiconfig";
 import { Chat } from "openai/resources";
 
 const BOOKS_DB = [
@@ -45,13 +50,16 @@ function get(id: string) {
 
 // Use helper function to executes the function specified by the LLM's output for 'function_call'.
 // It handles 'list', 'search', or 'get' functions, and raises an Exception for unknown functions.
-function callFunction(functionCall: string, arg: string) {
+function callFunction(functionCall: string, args: string) {
   switch (functionCall) {
     case "list":
+      var arg = JSON.parse(args).genre;
       return list(arg);
     case "search":
+      var arg = JSON.parse(args).name;
       return search(arg);
     case "get":
+      var arg = JSON.parse(args).id;
       return get(arg);
     default:
       throw new Error(`Unknown function: ${functionCall}`);
@@ -180,10 +188,14 @@ async function main() {
     Array.isArray(completion) ? completion[0] : completion
   ) as ExecuteResult;
 
-  const completionMessage = (output.data as OutputDataWithToolCallsValue);
-  const functionCall = completionMessage.value[0].function
+  const completionMessage = output.data as OutputDataWithToolCallsValue;
+  const functionCall = completionMessage.value[0].function;
+  // log function call
 
   const value = callFunction(functionCall!.name, functionCall!.arguments);
+  // log value with hard-coded text
+  console.log("Function call result: ", value);
+
   //const value = "test";
   // Use GPT to generate a user-friendly response
   const promptData = {
