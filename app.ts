@@ -1,7 +1,6 @@
 import {
   AIConfigRuntime,
   ExecuteResult,
-  Prompt,
   OutputDataWithToolCallsValue,
 } from "aiconfig";
 import { Chat } from "openai/resources";
@@ -67,122 +66,14 @@ function callFunction(functionCall: string, args: string) {
 }
 
 async function main() {
-  // Create the config (note: could also be done via loading aiconfig json file)
-  const config = AIConfigRuntime.create(
-    "Book Finder",
-    "Use OpenAI function calling to help recommend books"
-  );
+  let user_input = process.argv[2];
+  console.log("User input: ", user_input);
+  const config = AIConfigRuntime.load("book_db_function_calling.aiconfig.json");
 
-  const model = "gpt-3.5-turbo";
-  const data = {
-    model: model,
-    messages: [
-      {
-        role: "system",
-        content:
-          "Please use our book database, which you can access using functions to answer the following questions.",
-      },
-      {
-        role: "user",
-        content:
-          "I really enjoyed reading {{book}}, could you recommend me a book that is similar and tell me why?",
-      },
-    ],
-    functions: [
-      {
-        name: "list",
-        description:
-          "list queries books by genre, and returns a list of names of books",
-        parameters: {
-          type: "object",
-          properties: {
-            genre: {
-              type: "string",
-              enum: [
-                "mystery",
-                "nonfiction",
-                "memoir",
-                "romance",
-                "historical",
-              ],
-            },
-          },
-        },
-      },
-      {
-        name: "search",
-        description:
-          "search queries books by their name and returns a list of book names and their ids",
-        parameters: {
-          type: "object",
-          properties: {
-            name: {
-              type: "string",
-            },
-          },
-        },
-      },
-      {
-        name: "get",
-        description:
-          "get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.",
-        parameters: {
-          type: "object",
-          properties: {
-            id: {
-              type: "string",
-            },
-          },
-        },
-      },
-    ],
-  };
-
-  // Add the prompt
-  let newPrompts: Prompt[] = await config.serialize(
-    model,
-    data,
-    "recommend_book",
-    {
-      book: "To Kill a Mockingbird",
-    }
-  );
-  config.addPrompt(newPrompts[0]);
-
-  const params = { book: "Where the Crawdads Sing" };
-  const inferenceOptions = {
-    stream: true,
-    callbacks: {
-      streamCallback: (
-        data: Chat.Completions.ChatCompletionChunk.Choice.Delta,
-        _accumulatedData: any,
-        _index: any
-      ) => {
-        let text;
-        if (data?.content) {
-          text = data.content;
-        } else if (data?.function_call) {
-          if (data.function_call.name) {
-            text = `${data.function_call.name}(`;
-          } else if (data.function_call.arguments) {
-            text = data.function_call.arguments;
-          } else {
-            text = `)`;
-          }
-        } else {
-          text = "\n";
-        }
-        process.stdout.write(text);
-      },
-    },
-  };
+  const params = { user_input: user_input };
 
   // Run recommend_book prompt with gpt-3.5 and determine right function to call based on user question
-  const completion = await config.run(
-    "recommend_book",
-    params,
-    inferenceOptions
-  );
+  const completion = await config.run("get_book_info", params);
 
   const output = (
     Array.isArray(completion) ? completion[0] : completion
@@ -191,26 +82,10 @@ async function main() {
   const completionMessage = output.data as OutputDataWithToolCallsValue;
   const functionCall = completionMessage.value[0].function;
 
+  console.log("inferred function call: ", functionCall);
+
   const value = callFunction(functionCall!.name, functionCall!.arguments);
   console.log("Function call result: ", value);
-
-  //const value = "test";
-  // Use GPT to generate a user-friendly response
-  const promptData = {
-    model: model,
-    messages: [
-      {
-        role: "user",
-        content:
-          "Here is some data about a book from a books DB - please write a short description about the book as if you're a librarian. Data: {{book_info}}",
-      },
-    ],
-  };
-
-  newPrompts = await config.serialize(model, promptData, "gen_summary");
-  config.addPrompt(newPrompts[0]);
-
-  await config.run("gen_summary", { book_info: value }, inferenceOptions);
 }
 
 main();
