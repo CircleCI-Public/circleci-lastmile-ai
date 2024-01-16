@@ -62,7 +62,7 @@ async def test_function_accuracy():
     ]
     test_suite = [(input, correct_function(expected)) for input, expected in test_pairs]
     ts_settings = TestSuiteWithInputsSettings(
-        prompt_name="get_book_info",
+        prompt_name="user_query_to_function_call",
         aiconfig_path="./book_db_function_calling.aiconfig.json",
     )
 
