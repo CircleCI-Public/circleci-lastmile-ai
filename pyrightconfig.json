@@ -1,0 +1,9 @@
+{
+  "typeCheckingMode": "strict",
+  "include": ["**"],
+  "exclude": [],
+  "ignore": [],
+  "venv": "aiconfig",
+  "pythonVersion": "3.10",
+  "reportMissingTypeStubs": false
+}
