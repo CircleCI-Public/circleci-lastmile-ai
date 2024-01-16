@@ -85,7 +85,7 @@ def _serialize_book_data_to_text(book_data: Book | List[Book]) -> str:
 async def main(argv: list[str]) -> int:
     try:
         user_query = sys.argv[1]
-        text_response = await _get_app_response(user_query)
+        text_response = await get_app_response(user_query)
         print("\n\nResponse:\n")
         print(text_response)
         return 0
@@ -97,7 +97,7 @@ async def main(argv: list[str]) -> int:
         return 1
 
 
-async def _get_app_response(user_query: str) -> str:
+async def get_app_response(user_query: str) -> str:
     print(f"User query: {user_query}")
     aiconfig = AIConfigRuntime.load("book_db_function_calling.aiconfig.json")
     user_input_params = dict(the_query=user_query)
@@ -115,11 +115,12 @@ async def _get_app_response(user_query: str) -> str:
     print(f"Function output: {function_output}")
 
     function_output_as_text = _serialize_book_data_to_text(function_output)
-    qa_input = f"Question: {user_query}\n\nData: {function_output_as_text}\n\n"
-    # print(f"Function output as text: {function_output_as_text}")
-    function_output_params = dict(qa_input=qa_input)
+    params_for_get_text_response = dict(
+        user_query=user_query, function_output_as_text=function_output_as_text
+    )
+    print("Params for get_text_response:", params_for_get_text_response)
     return await aiconfig.run_and_get_output_text(
-        "function_output_to_text_response", function_output_params
+        "function_output_to_text_response", params_for_get_text_response
     )
 
 

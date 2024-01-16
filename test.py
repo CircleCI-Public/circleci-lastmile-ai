@@ -11,7 +11,7 @@ from aiconfig.eval.api import (
 from aiconfig.eval.api import metrics, common
 import pytest
 
-from app import get, list_by_genre, search
+from app import get, get_app_response, list_by_genre, search
 
 pd.set_option("display.max_colwidth", None)
 pd.set_option("display.max_columns", None)
@@ -100,3 +100,21 @@ def test_book_db_api():
     query_result_3 = [book.name for book in list_by_genre("dystopian")]
 
     assert query_result_3 == ["1984"]
+
+
+@pytest.mark.asyncio
+async def test_e2e_correctness_1():
+    response1 = await get_app_response("how widely-read is 'To Kill a Mockingbird'?")
+    print(f"{response1=}")
+    assert "18 million" in response1.lower()
+
+
+@pytest.mark.asyncio
+async def test_e2e_correctness_2():
+    response2 = await get_app_response("whats in our historical collection?")
+    for historical_book_name in [
+        "All the Light We Cannot See",
+        "To Kill a Mockingbird",
+        "Where the Crawdads Sing",
+    ]:
+        assert historical_book_name in response2
