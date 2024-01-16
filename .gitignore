@@ -13,6 +13,9 @@ logs
 results
 tmp
 
+# Python packaging.
+.venv/
+
 # Build
 public/css/main.css
 

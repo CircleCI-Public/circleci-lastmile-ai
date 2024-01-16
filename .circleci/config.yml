@@ -1,19 +1,18 @@
 version: 2.1
 
+orbs:
+  python: circleci/python@2.1.1
+
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/configuration-reference/#jobs
 jobs:
   build-app:
     docker:
-      - image: cimg/node:21.5.0
+      - image: cimg/python:3.12.1
     steps:
       - checkout
-      - run:
-          name: Install deps
-          command: yarn install
-      - run:
-          name: Run the config
-          command: npx ts-node app.ts
+      - python/install-packages:
+          pkg-manager: pip
     
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
