@@ -1,5 +1,6 @@
 from functools import partial
 import json
+from typing import Any
 import pandas as pd
 
 
@@ -11,13 +12,16 @@ from aiconfig.eval.api import (
 from aiconfig.eval.api import metrics, common
 import pytest
 
-from app import get, get_app_response, list_by_genre, search
+from book_db import get, list_by_genre, search
+from app import get_app_response
 
 pd.set_option("display.max_colwidth", None)
 pd.set_option("display.max_columns", None)
 
+JSON = dict[str, Any]
 
-async def _correct_fn(datum: str, expected: str) -> bool:
+
+async def _correct_fn(datum: str, expected: JSON) -> bool:
     output_loaded = json.loads(datum)["value"][0]["function"]
     output_loaded["arguments"] = json.loads(output_loaded["arguments"])
 
@@ -29,7 +33,7 @@ async def _correct_fn(datum: str, expected: str) -> bool:
     return output_loaded_normalized == expected_normalized
 
 
-def correct_function(expected: str):
+def correct_function(expected: JSON):
     return metrics.Metric(
         evaluation_fn=partial(_correct_fn, expected=expected),
         metric_metadata=common.EvaluationMetricMetadata(
@@ -44,7 +48,7 @@ def correct_function(expected: str):
 
 @pytest.mark.asyncio
 async def test_function_accuracy():
-    test_pairs = [
+    test_pairs: list[tuple[str, JSON]] = [
         (
             "ID isbn123",
             #
@@ -72,14 +76,14 @@ async def test_function_accuracy():
     )
 
     accuracy = (
-        df_result.query("metric_name=='correct_function'").value.fillna(False).mean()
+        df_result.query("metric_name=='correct_function'").value.fillna(False).mean()  # type: ignore[pandas]
     )
 
     is_acceptable_accuracy = accuracy > 0.9
 
     print(
         "Result dataframe:\n",
-        df_result.set_index(["input", "aiconfig_output", "metric_name"]).value.unstack(
+        df_result.set_index(["input", "aiconfig_output", "metric_name"]).value.unstack(  # type: ignore[pandas]
             "metric_name"
         ),
     )
