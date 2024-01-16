@@ -73,7 +73,7 @@ async function main() {
   const params = { the_query: user_input };
 
   // Run recommend_book prompt with gpt-3.5 and determine right function to call based on user question
-  const completion = await config.run("get_book_info", params);
+  const completion = await config.run("user_query_to_function_call", params);
 
   const output = (
     Array.isArray(completion) ? completion[0] : completion

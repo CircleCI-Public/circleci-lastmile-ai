@@ -5,7 +5,18 @@
   "metadata": {},
   "prompts": [
     {
-      "name": "get_book_info",
+      "name": "function_output_to_text_response",
+      "input": "{{qa_input}}",
+      "metadata": {
+        "model": {
+          "name": "gpt-3.5-turbo"
+        }
+      },
+      "parameters": {},
+      "remember_chat_context": false
+    },
+    {
+      "name": "user_query_to_function_call",
       "input": "{{the_query}}",
       "metadata": {
         "model": {
@@ -64,7 +75,7 @@
           }
         },
         "parameters": {},
-        "remember_chat_context": true
+        "remember_chat_context": false
       }
     }
   ],
