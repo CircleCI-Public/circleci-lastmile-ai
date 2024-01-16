@@ -1,8 +1,6 @@
-import asyncio
 from functools import partial
 import json
 import pandas as pd
-import sys
 
 
 from aiconfig.eval.api import (
@@ -12,6 +10,8 @@ from aiconfig.eval.api import (
 
 from aiconfig.eval.api import metrics, common
 import pytest
+
+from app import get, list_by_genre, search
 
 pd.set_option("display.max_colwidth", None)
 pd.set_option("display.max_columns", None)
@@ -62,7 +62,7 @@ async def test_function_accuracy():
     ]
     test_suite = [(input, correct_function(expected)) for input, expected in test_pairs]
     ts_settings = TestSuiteWithInputsSettings(
-        prompt_name="get_book_info",
+        prompt_name="user_query_to_function_call",
         aiconfig_path="./book_db_function_calling.aiconfig.json",
     )
 
@@ -87,3 +87,16 @@ async def test_function_accuracy():
     print(f"Correct function accuracy: {accuracy}")
 
     assert is_acceptable_accuracy, f"Low accuracy: {accuracy}"
+
+
+def test_book_db_api():
+    query_result_1 = search("harry potter")
+    assert query_result_1 == []
+
+    query_result_2 = get("a2")
+    assert query_result_2 is not None
+    assert query_result_2.name == "All the Light We Cannot See"
+
+    query_result_3 = [book.name for book in list_by_genre("dystopian")]
+
+    assert query_result_3 == ["1984"]
