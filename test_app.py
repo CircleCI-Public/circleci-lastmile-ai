@@ -1,5 +1,6 @@
 import json
 from functools import partial
+import traceback
 from typing import Any
 
 import pandas as pd
@@ -21,23 +22,28 @@ pd.set_option("display.max_columns", None)
 JSON = dict[str, Any]
 
 
-async def _correct_fn(datum: str, expected: JSON) -> bool:
-    output_loaded = json.loads(datum)["value"][0]["function"]
-    output_loaded["arguments"] = json.loads(output_loaded["arguments"])
+async def _is_correct_fn(datum: str, expected: JSON) -> float:
+    print(f"{datum=}", f"{expected=}")
+    try:
+        output_loaded = json.loads(datum)["value"][0]["function"]
+        output_loaded["arguments"] = json.loads(output_loaded["arguments"])
 
-    # Round trip to normalize whitespace and order
-    output_loaded_normalized = json.dumps(output_loaded, sort_keys=True)
+        # Round trip to normalize whitespace and order
+        output_loaded_normalized = json.dumps(output_loaded, sort_keys=True)
 
-    expected["arguments"] = json.loads(expected["arguments"])
-    expected_normalized = json.dumps(expected, sort_keys=True)
-    return output_loaded_normalized == expected_normalized
+        expected["arguments"] = json.loads(expected["arguments"])
+        expected_normalized = json.dumps(expected, sort_keys=True)
+        return float(output_loaded_normalized == expected_normalized)
+    except Exception:
+        print("Exception:", traceback.format_exc())
+        return 0
 
 
-def correct_function(expected: JSON):
+def is_correct_function(expected: JSON):
     return metrics.Metric(
-        evaluation_fn=partial(_correct_fn, expected=expected),
+        evaluation_fn=partial(_is_correct_fn, expected=expected),
         metric_metadata=common.EvaluationMetricMetadata(
-            name="correct_function",
+            name="is_correct_function",
             description="True (pass) if function call is correct",
             best_value=True,
             worst_value=False,
@@ -48,23 +54,27 @@ def correct_function(expected: JSON):
 
 @pytest.mark.asyncio
 async def test_function_accuracy():
-    test_pairs: list[tuple[str, JSON]] = [
+    test_pairs: list[tuple[dict[str, str], JSON]] = [
         (
-            "ID isbn123",
+            {"user_query": "ID isbn123"},
             #
             {"arguments": '{\n  "id": "isbn123"\n}', "name": "get"},
         ),
         (
-            "harry potter",
+            {"user_query": "harry potter"},
             #
             {"arguments": '{\n  "name": "harry potter"\n}', "name": "search"},
         ),
         (
-            "I really like Agatha Christie. I wonder what else we have like her.",
+            {
+                "user_query": "I really like Agatha Christie. I wonder what else we have like her."
+            },
             {"arguments": '{\n  "genre": "mystery"\n}', "name": "list"},
         ),
     ]
-    test_suite = [(input, correct_function(expected)) for input, expected in test_pairs]
+    test_suite = [
+        (input, is_correct_function(expected)) for input, expected in test_pairs
+    ]
     ts_settings = TestSuiteWithInputsSettings(
         prompt_name="user_query_to_function_call",
         aiconfig_path="./book_db_function_calling.aiconfig.json",
@@ -75,22 +85,15 @@ async def test_function_accuracy():
         settings=ts_settings,
     )
 
-    accuracy = (
-        df_result.query("metric_name=='correct_function'").value.fillna(False).mean()  # type: ignore[pandas]
-    )
+    thresholds = {
+        "is_correct_function": 0.9,
+    }
+    means = df_result.groupby("metric_name").value.mean().to_dict()  # type: ignore[pandas]
 
-    is_acceptable_accuracy = accuracy > 0.9
+    for metric_name, mean in means.items():
+        assert mean > thresholds[metric_name], f"Low {metric_name} accuracy: {mean}"
 
-    print(
-        "Result dataframe:\n",
-        df_result.set_index(["input", "aiconfig_output", "metric_name"]).value.unstack(  # type: ignore[pandas]
-            "metric_name"
-        ),
-    )
-
-    print(f"Correct function accuracy: {accuracy}")
-
-    assert is_acceptable_accuracy, f"Low accuracy: {accuracy}"
+    print(f"Correct function accuracy: {means['is_correct_function']}")
 
 
 def test_book_db_api():
@@ -108,14 +111,34 @@ def test_book_db_api():
 
 @pytest.mark.asyncio
 async def test_generate_correctness_1():
-    aiconfig = AIConfigRuntime.load("book_db_function_calling.aiconfig.json")
-    response1 = await generate_response_from_data(
-        aiconfig,
-        "how widely-read is 'To Kill a Mockingbird'?",
-        '{"id":"a1","name":"To Kill a Mockingbird","genre":"historical","description":"Compassionate, dramatic, and deeply moving, \\"To Kill A Mockingbird\\" takes readers to the roots of human behavior - to innocence and experience, kindness and cruelty, love and hatred, humor and pathos. Now with over 18 million copies in print and translated into forty languages, this regional story by a young Alabama woman claims universal appeal. Harper Lee always considered her book to be a simple love story. Today it is regarded as a masterpiece of American literature."}',
+    test_suite = [
+        (
+            {
+                "user_query": "how widely-read is 'To Kill a Mockingbird'?",
+                "function_output_as_text": '{"id":"a1","name":"To Kill a Mockingbird","genre":"historical","description":"Compassionate, dramatic, and deeply moving, \\"To Kill A Mockingbird\\" takes readers to the roots of human behavior - to innocence and experience, kindness and cruelty, love and hatred, humor and pathos. Now with over 18 million copies in print and translated into forty languages, this regional story by a young Alabama woman claims universal appeal. Harper Lee always considered her book to be a simple love story. Today it is regarded as a masterpiece of American literature."}',
+            },
+            metrics.substring_match("18 million", case_sensitive=False),
+        )
+    ]
+    ts_settings = TestSuiteWithInputsSettings(
+        prompt_name="function_output_to_text_response",
+        aiconfig_path="./book_db_function_calling.aiconfig.json",
     )
-    print(f"{response1=}")
-    assert "18 million" in response1.lower()
+
+    df_result = await run_test_suite_with_inputs(
+        test_suite=test_suite,
+        settings=ts_settings,
+    )
+
+    thresholds = {
+        "substring_match": 0.95,
+    }
+    means = df_result.groupby("metric_name").value.mean().to_dict()  # type: ignore[pandas]
+
+    for metric_name, mean in means.items():
+        assert mean > thresholds[metric_name], f"Low {metric_name} accuracy: {mean}"
+
+    print(f"substring match accuracy: {means['substring_match']}")
 
 
 @pytest.mark.asyncio
