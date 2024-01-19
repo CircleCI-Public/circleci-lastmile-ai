@@ -12,6 +12,7 @@ pids
 logs
 results
 tmp
+log.txt
 
 # Python packaging.
 .venv/
