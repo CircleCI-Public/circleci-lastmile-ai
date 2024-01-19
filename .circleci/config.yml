@@ -14,8 +14,10 @@ jobs:
       - python/install-packages:
           pkg-manager: pip
       - run:
-          name: Run tests
-          command: python -m pytest
+          name: Run assistant evals.
+          command: python -m pytest --junitxml results.xml
+      - store_test_results:
+          path: results.xml
     
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows

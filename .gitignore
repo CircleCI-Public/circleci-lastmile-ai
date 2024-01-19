@@ -15,6 +15,7 @@ tmp
 
 # Python packaging.
 .venv/
+.env
 
 # Build
 public/css/main.css
