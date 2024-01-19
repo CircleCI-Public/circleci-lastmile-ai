@@ -57,7 +57,7 @@ async def test_function_accuracy():
         (
             "harry potter",
             #
-            {"arguments": '{\n  "name": "harry potter"\n}', "name": "search"},
+            {"arguments": '{\n  "name": "harry potter"\n}', "name": "list"},
         ),
         (
             "I really like Agatha Christie. I wonder what else we have like her.",
