@@ -1,2 +1,2 @@
 pydantic>=2.1
-python-aiconfig
+python-aiconfig-test=1.1.24
