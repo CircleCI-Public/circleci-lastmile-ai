@@ -1,9 +1,8 @@
 import asyncio
 import sys
-from typing import List, cast
+from typing import List
 
 from aiconfig import AIConfigRuntime
-from aiconfig.schema import FunctionCallData
 
 from book_db import Book, call_function
 
@@ -52,19 +51,20 @@ async def generate_response_from_data(
 async def get_app_response(user_query: str) -> str:
     print(f"User query: {user_query}")
     aiconfig = AIConfigRuntime.load("book_db_function_calling.aiconfig.json")
-    user_input_params = dict(the_query=user_query)
-    function_call_response: FunctionCallData = cast(
-        FunctionCallData,
-        (await aiconfig.run("user_query_to_function_call", user_input_params))[0]  # type: ignore[union-attr]
-        .data.value[0]
-        .function,
-    )
+    user_input_params = dict(user_query=user_query)
+
+    run_output = await aiconfig.run("user_query_to_function_call", user_input_params)  # type: ignore[union-attr]
+    print(f"Run output: {run_output}")
+    tool_call_data = run_output[0].data.value  # type: ignore
+    print(f"Tool call data: {tool_call_data}")
+    function_call_response = tool_call_data[0].function  # type: ignore
+
     print(
         f"Function call response: {function_call_response}, type: {type(function_call_response)}"
     )
-    function_output = call_function(
-        function_call_response.name, function_call_response.arguments
-    )
+
+    name, args = function_call_response.name, function_call_response.arguments  # type: ignore
+    function_output = call_function(name, args)  # type: ignore
     print(f"Function output: {function_output}")
 
     serialized_book_data = _serialize_book_data_to_text(function_output)
