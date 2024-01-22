@@ -158,4 +158,4 @@ When we unit test our book DB API, it makes sense to guarantee that every call w
 
 However -- as you may have noticed by now -- we loosen things up a little for the other tests. This is due to the nature of testing AI models: since they are much less transparent and consistent than rule-based procedures, it is not necessarily practical to require that every test cases passes all the time.
 
-Instead, we can compute metrics over our test data and then define assertions based on fixed thresholds. For example, we consider 90% accuracy as passing in function selection.
+Instead, we can compute metrics over our test data and then define assertions based on fixed thresholds. For example, we consider 90% accuracy as passing in function selection. Since function calling is somewhat similar to a classifier, it makes sense to evaluate it that way.
