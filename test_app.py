@@ -60,9 +60,9 @@ async def test_function_accuracy():
             {"arguments": '{\n  "id": "isbn123"\n}', "name": "get"},
         ),
         (
-            {"user_query": "harry potter"},
+            {"user_query": "To kill a mockingbird"},
             #
-            {"arguments": '{\n  "name": "harry potter"\n}', "name": "search"},
+            {"arguments": '{\n  "name": "To kill a mockingbird"\n}', "name": "search"},
         ),
         (
             {
