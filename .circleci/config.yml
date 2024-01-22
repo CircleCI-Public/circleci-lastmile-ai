@@ -11,9 +11,8 @@ jobs:
       - image: cimg/python:3.12.1
     steps:
       - checkout
-      - run:
-          name: Install
-          command: pip install --extra-index-url https://test.pypi.org/simple/ -r requirements.txt
+      - python/install-packages:
+          pkg-manager: pip
       - run:
           name: Run assistant evals.
           command: python -m pytest --junitxml results.xml
@@ -26,4 +25,4 @@ workflows:
   build-test-deploy:
     jobs:
       - build-app:
-          context: ai-eval-examples
+          context: cci-last-mile-example
