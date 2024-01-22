@@ -7,15 +7,16 @@
 
 ## Quickstart
 
-1. `git clone git@github.com:CircleCI-Public/circleci-lastmile-ai.git`
+1. Fork this repository and clone locally
 2. `pip install -r requirements.txt`
 3. `OPENAI_API_KEY=<YOUR_API_KEY> python app.py "Recommend some books, I love mystery novels."`
+4. `git push`
 
 ## Getting started
 
-Our application will use an AI model to help a user get book recommendations. Our application uses OpenAI's function calling support to allow for structured operations like searching for books or getting details for a specific book.
+The application will use an AI model to help a user get book recommendations. The application uses OpenAI's function calling support to allow for structured operations like searching for books or getting details for a specific book.
 
-We'll set up a CI pipeline to run some tests to validate our function calls and to help regression test changes to our prompt.
+You will set up a CI pipeline to run some tests to validate our function calls and to help regression test changes to our prompt.
 
 ### Environment setup
 We recommend creating a virtual environment to store your dependencies.
@@ -31,44 +32,48 @@ You will also need to provide an OpenAI API key by setting the `OPENAI_API_KEY` 
 
 ### Run the application
 
-### Set up CircleCI
+The command-line application accepts questions about books and provides recommendations to the user based on a database of existing books.
 
-TODO: Work with Jacob on what our current fast path for this is
+Let's get some recommendations for mystery fans.
 
-## Running and adding tests
+`OPENAI_API_KEY=<YOUR API KEY> python app.py "Recommend some books, I love mystery novels."`
 
-We can write assertions about our application as standard pytest tests. In our application there are a few different types of tests to consider
+### Set up the CI pipeline
 
-### Testing our DB lookup functions
+Sign up for a circleci account at: https://circleci.com/signup/ and authorize the CircleCI Github application to access your account.
 
-These are standard unit tests to validate our functions to query the book DB.
+You can securely store your OpenAI key in a CircleCI Context
+1. Go to `Organization Settings`
+2. Click `Contexts`
+3. Click `Create Context`
+4. On the context form enter: `cci-last-mile-example` for the name
+5. Edit the `cci-last-mile-example` context
+  - Click `Add Environment Variable`
+  - Enter: `OPENAI_API_KEY` as the name
+  - Paste your OpenAI API key as the value
+  - Click `Add Environment Variable`
 
-### Function calling tests
+Now we'll set up our project to build on CircleCI
+1. From the project dahsboard find your forked repository and click "Setup Project"
+2. When prompted for a branch enter `main` and click `Setup project`
 
-We pass our function schemas to OpenAI and the model decides which function to call. We want to write tests to verify the model is selecting the expected functions.
+You should see a pipeline start to run in the CircleCI UI.
 
-Consider asking our application about `Harper Lee`, here the model decides to use the `search` function
-```bash
-python app.py "Harper Lee"
-```
-
-> User query: Harper Lee
-Function call response: arguments='{\n  "name": "Harper Lee"\n}' name='search', type: <class 'aiconfig.schema.FunctionCallData'>
-Calling function search with args {
-  "name": "Harper Lee"
-}
-
-### Output tests
-
-Our application is supposed to help users with book recommendations, but we can experience issues with some queries giving non book information.
-
-Taking the Harper Lee example, we get back biographical information about Lee. This information is accurate, but doesn't really help with the user request.
+From your terminal, create and push a branch:
 
 ```bash
-python app.py "Harper Lee"
+git checkout -b circleci-tests
+git push origin circleci-test
 ```
+Go to the CircleCI UI for the project, to view the pipeline. You should see a failing test case in the CircleCI UI.
 
->Harper Lee was an American author best known for her novel "To Kill a Mockingbird," which was published in 1960. The novel explores themes of racial injustice and the loss of innocence through the eyes of its young protagonist, Scout Finch. "To Kill a Mockingbird" became an instant classic and won the Pulitzer Prize for Fiction in 1961.
+### Running Tests
 
-We can change the model settings system prompt to restrict the responses to providing book recommendations instead of general information.
+The AIConfig test module supports running tests using `pytest`. In this application there are a few different types of tests to consider:
 
+* Unit tests for our query logic to find books
+* Function Calling tests to validate that OpenAI calls the expected functions. For example, if we ask about Harper Lee, we'd expect the `search` function to be used.
+* Output tests to check that the prompts we send to OpenAI are producing expected responses.
+
+You can run all the tests with the following command:
+`OPENAI_API_KEY=<YOUR_API_KEY> pytest test_app.py`
