@@ -47,7 +47,7 @@ The command-line application accepts questions about books and provides recommen
 
 Let's get some recommendations for mystery fans.
 
-`OPENAI_API_KEY=<YOUR API KEY> python app.py "Recommend some books, I love mystery novels."`
+`OPENAI_API_KEY=<YOUR API KEY> python app.py "Recommend 2 books, I love mystery novels."`
 
 ### Set up the CI pipeline
 
@@ -88,36 +88,25 @@ You'll fix this failing test using the AIConfig editor and test module, then ver
 
 ### Running Tests Locally
 
-The AIConfig test module supports running tests using `pytest`. In this application there are a few different types of tests to consider:
+The AIConfig test module supports running tests using `pytest` (`pip install pytest`).
 
-- Unit tests for our query logic to find books
-- Function Calling tests to validate that OpenAI calls the expected functions. For example, if we ask about Harper Lee, we'd expect the `search` function to be used.
-- Output tests to check that the prompts we send to OpenAI are producing expected responses.
+In this application there are a few different types of tests to consider:
+
+- Unit tests for our query logic to find books.
+- Function Calling tests to validate that OpenAI infers the expected functions. For example, if we ask about Harper Lee, we'd expect the `search` function to be used.
+- Natural language text generation tests (see example below).
+- End-to-end tests. Analogous to traditional integration/end-to-end tests, but a little different for an AI application.
 
 You can run all the tests with the following command:
 `OPENAI_API_KEY=<YOUR_API_KEY> pytest test_app.py`
 
 You should see the same test,`test_function_accuracy`, failure.
 
-### Final text generation
+#### Query Logic Unit Tests
 
-Even if we ran the correct function and got the correct data, sometimes the model doesn't extract, summarize, and/or infer the answer intelligently. For example,
+Ordinary unit tests for rule-based code. For every input/expected output pair, we call a function and assert its output is correct.
 
-Query:
-
-> "search 'All the Light We Cannot See' book name. How many living family members does Werner most likely have?"
-
-Data:
-
-> "In a mining town in Germany, Werner Pfennig, an orphan, grows up with his younger sister..."
-
-Response:
-
-> The given data does not provide any information about the number of living family members Werner has.
-
-We can test for this kind of problem as well.
-
-### End-to-end tests
+### Function Calling Tests
 
 In this case, you can see that we are expecting the model to select the `search` function, which queries by book name, for the `To kill a mockingbird` query. But the model is choosing the `get`, which tries to look up a book by it's ISBN id, function instead.
 
@@ -141,8 +130,32 @@ git commit -m "Fix failing test."
 git push
 ```
 
-## Metrics-driven model testing
+#### Tests for Natural Language Text Generation
 
-When we unit test our book DB API, it makes sense to guarantee that every call works exactly as expected. However, in the other tests, we loosen things up a little because of the nature of testing AI models. Since they are much less transparent and consistent than rule-based processes, it is not necessarily practical to insist that every test cases passes all the time.
+Even if we ran the correct function and got the correct data, sometimes the model doesn't extract, summarize, and/or infer the answer intelligently. For example,
 
-Instead, in some of our tests we set thresholds. For example, we consider 90% accuracy as passing in function selection.
+Query:
+
+> "search 'All the Light We Cannot See' book name. How many living immediate family members does Werner most likely have?"
+
+Data:
+
+> "In a mining town in Germany, Werner Pfennig, an orphan, grows up with his younger sister..."
+
+Response:
+
+> The given data does not provide any information about the number of living family members Werner has.
+
+Please see test_threshold_book_recall() in `test_app.py` for a full example test for natural language generation given input data.
+
+### End-to-end tests
+
+You can also test AI apps e2e. For example, we expect the query "How widely-read is 'To Kill a Mockingbird'?" to include "18 million copies sold" which we know is in the book DB. This is done similarly to the natural language generation test, but instead of looking at the book DB data explicitly, it directly tests that a particular user query is answered correctly, in more of a black-box fashion.
+
+## Metrics-Driven Model Testing
+
+When we unit test our book DB API, it makes sense to guarantee that every call works exactly as expected.
+
+However -- as you may have noticed by now -- we loosen things up a little for the other tests. This is due to the nature of testing AI models: since they are much less transparent and consistent than rule-based procedures, it is not necessarily practical to require that every test cases passes all the time.
+
+Instead, we can compute metrics over our test data and then define assertions based on fixed thresholds. For example, we consider 90% accuracy as passing in function selection.
