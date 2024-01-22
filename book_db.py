@@ -54,7 +54,6 @@ def get(id: str) -> Book | None:
 
 
 def call_function(name: str, args: str) -> Book | None | list[Book]:
-    print(f"Calling function {name} with args {args}")
     args_dict = json.loads(args)
     match name:
         case "list":
