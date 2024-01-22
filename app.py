@@ -52,7 +52,7 @@ async def generate_response_from_data(
     )
 
     LOGGER.info(
-        f"Calling first AIConfig prompt with params:\n\n{params_for_get_text_response}"
+        f"Calling second AIConfig prompt with params:\n\n{params_for_get_text_response}"
     )
     return await aiconfig.run_and_get_output_text(
         "function_output_to_text_response", params_for_get_text_response

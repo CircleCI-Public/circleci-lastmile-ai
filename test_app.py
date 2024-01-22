@@ -160,7 +160,6 @@ async def test_threshold_book_recall():
                 "To Kill a Mockingbird",
                 "Where the Crawdads Sing",
             ]
-            # book_recall(expected),
         ),
         (
             {
@@ -204,7 +203,6 @@ async def test_e2e_correctness_1():
 
 @pytest.mark.asyncio
 async def test_e2e_correctness_2():
-    # This corresponds to what we expect for upstream input "whats in our historical collection?"
     response2 = await get_app_response("whats in our historical collection?")
     for historical_book_name in [
         "All the Light We Cannot See",
