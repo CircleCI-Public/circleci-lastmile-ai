@@ -1,9 +1,9 @@
 # circleci-lastmile-ai
 
 ## Pre-requisites
-* OpenAI API Key
-* LastMile AIConfig editor installed
-* CircleCI Account
+
+- OpenAI API Key
+- CircleCI Account
 
 ## Quickstart
 
@@ -14,11 +14,20 @@
 
 ## Getting started
 
-The application will use an AI model to help a user get book recommendations. The application uses OpenAI's function calling support to allow for structured operations like searching for books or getting details for a specific book.
+The application will use an AI model (OpenAI's GPT3.5, AKA ChatGPT) to help a user get book recommendations. The application uses OpenAI's function calling support to allow for structured operations like searching for books or getting details for a specific book.
 
-You will set up a CI pipeline to run some tests to validate our function calls and to help regression test changes to our prompt.
+Here's how it works:
+
+1. Convert the user query into a function call via GPT3.5
+2. Run the function against the book DB
+3. Combine the function output with the original query
+4. Send that combined text to the model again
+5. Show that output to the user
+
+You will set up a CI pipeline to run some tests to validate this functionality calls and to help regression test changes to our prompt.
 
 ### Environment setup
+
 We recommend creating a virtual environment to store your dependencies.
 
 ```bash
@@ -28,7 +37,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-You will also need to provide an OpenAI API key by setting the `OPENAI_API_KEY` environment variable in order to use the AIConfig Editor.
+The install command will include the AIConfig SDK and editor, which you will allow you to run the app and edit its configuration (including the prompt).
+
+You will also need to provide an OpenAI API key by setting the `OPENAI_API_KEY` environment variable in order to use the AIConfig SDK.
 
 ### Run the application
 
@@ -43,18 +54,21 @@ Let's get some recommendations for mystery fans.
 Sign up for a circleci account at: https://circleci.com/signup/ and authorize the CircleCI Github application to access your account.
 
 You can securely store your OpenAI key in a CircleCI Context
+
 1. Go to `Organization Settings`
 2. Click `Contexts`
 3. Click `Create Context`
 4. On the context form enter: `cci-last-mile-example` for the name
 5. Edit the `cci-last-mile-example` context
-  - Click `Add Environment Variable`
-  - Enter: `OPENAI_API_KEY` as the name
-  - Paste your OpenAI API key as the value
-  - Click `Add Environment Variable`
+
+- Click `Add Environment Variable`
+- Enter: `OPENAI_API_KEY` as the name
+- Paste your OpenAI API key as the value
+- Click `Add Environment Variable`
 
 Now we'll set up our project to build on CircleCI
-1. From the project dahsboard find your forked repository and click "Setup Project"
+
+1. From the project dashboard find your forked repository and click "Setup Project"
 2. When prompted for a branch enter `main` and click `Setup project`
 
 You should see a pipeline start to run in the CircleCI UI.
@@ -65,6 +79,7 @@ From your terminal, create and push a branch:
 git checkout -b circleci-tests
 git push origin circleci-test
 ```
+
 Go to the CircleCI UI for the project, to view the pipeline.
 
 You should see a failing test case for `test_function_accuracy` in the CircleCI UI.
@@ -75,16 +90,34 @@ You'll fix this failing test using the AIConfig editor and test module, then ver
 
 The AIConfig test module supports running tests using `pytest`. In this application there are a few different types of tests to consider:
 
-* Unit tests for our query logic to find books
-* Function Calling tests to validate that OpenAI calls the expected functions. For example, if we ask about Harper Lee, we'd expect the `search` function to be used.
-* Output tests to check that the prompts we send to OpenAI are producing expected responses.
+- Unit tests for our query logic to find books
+- Function Calling tests to validate that OpenAI calls the expected functions. For example, if we ask about Harper Lee, we'd expect the `search` function to be used.
+- Output tests to check that the prompts we send to OpenAI are producing expected responses.
 
 You can run all the tests with the following command:
 `OPENAI_API_KEY=<YOUR_API_KEY> pytest test_app.py`
 
 You should see the same test,`test_function_accuracy`, failure.
 
-*Note:* Our function calling application is using OpenAI as a classifier to select a function based on a user query. Our tests define a threshold to allow for occasional errors by the OpenAI model in selecting a function.
+### Final text generation
+
+Even if we ran the correct function and got the correct data, sometimes the model doesn't extract, summarize, and/or infer the answer intelligently. For example,
+
+Query:
+
+> "search 'All the Light We Cannot See' book name. How many living family members does Werner most likely have?"
+
+Data:
+
+> "In a mining town in Germany, Werner Pfennig, an orphan, grows up with his younger sister..."
+
+Response:
+
+> The given data does not provide any information about the number of living family members Werner has.
+
+We can test for this kind of problem as well.
+
+### End-to-end tests
 
 In this case, you can see that we are expecting the model to select the `search` function, which queries by book name, for the `To kill a mockingbird` query. But the model is choosing the `get`, which tries to look up a book by it's ISBN id, function instead.
 
@@ -108,4 +141,8 @@ git commit -m "Fix failing test."
 git push
 ```
 
+## Metrics-driven model testing
 
+When we unit test our book DB API, it makes sense to guarantee that every call works exactly as expected. However, in the other tests, we loosen things up a little because of the nature of testing AI models. Since they are much less transparent and consistent than rule-based processes, it is not necessarily practical to insist that every test cases passes all the time.
+
+Instead, in some of our tests we set thresholds. For example, we consider 90% accuracy as passing in function selection.
