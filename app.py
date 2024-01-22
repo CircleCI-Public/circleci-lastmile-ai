@@ -6,6 +6,10 @@ from aiconfig import AIConfigRuntime
 
 from book_db import Book, call_function
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 async def main(argv: list[str]) -> int:
     try:
