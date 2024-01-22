@@ -65,9 +65,13 @@ From your terminal, create and push a branch:
 git checkout -b circleci-tests
 git push origin circleci-test
 ```
-Go to the CircleCI UI for the project, to view the pipeline. You should see a failing test case in the CircleCI UI.
+Go to the CircleCI UI for the project, to view the pipeline.
 
-### Running Tests
+You should see a failing test case for `test_function_accuracy` in the CircleCI UI.
+
+You'll fix this failing test using the AIConfig editor and test module, then verify the fix in your CI pipeline.
+
+### Running Tests Locally
 
 The AIConfig test module supports running tests using `pytest`. In this application there are a few different types of tests to consider:
 
@@ -77,3 +81,31 @@ The AIConfig test module supports running tests using `pytest`. In this applicat
 
 You can run all the tests with the following command:
 `OPENAI_API_KEY=<YOUR_API_KEY> pytest test_app.py`
+
+You should see the same test,`test_function_accuracy`, failure.
+
+*Note:* Our function calling application is using OpenAI as a classifier to select a function based on a user query. Our tests define a threshold to allow for occasional errors by the OpenAI model in selecting a function.
+
+In this case, you can see that we are expecting the model to select the `search` function, which queries by book name, for the `To kill a mockingbird` query. But the model is choosing the `get`, which tries to look up a book by it's ISBN id, function instead.
+
+We can fix this by editing the prompt using the AIConfig editor: `aiconfig edit --aiconfig-path book_db_function_calling.aiconfig.json`
+
+We want to update the function description for `search` to be more specific. In the editor, update the description for the function to: `search queries books by their name and returns a list of book names and their ids`
+
+You will also need to change the `get` function description to tell the model it should only accept ids: `get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.`.
+
+We also need to change the parameters for the `get` call to accept a property called `id`
+
+Finally, we need to update `book_db.py` to use the `id` instead of the `book` parameter.
+
+You can rerun the test: `OPENAI_API_KEY=<YOUR_API_KEY> pytest test_app.py` and they should pass.
+
+You can commit the change and push to CircleCI
+
+```bash
+git add test_app.py
+git commit -m "Fix failing test."
+git push
+```
+
+
