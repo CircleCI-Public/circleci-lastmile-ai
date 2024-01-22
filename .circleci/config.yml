@@ -11,14 +11,15 @@ jobs:
       - image: cimg/python:3.12.1
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
+      - run:
+          name: Install
+          command: pip install --extra-index-url https://test.pypi.org/simple/ -r requirements.txt
       - run:
           name: Run assistant evals.
           command: python -m pytest --junitxml results.xml
       - store_test_results:
           path: results.xml
-    
+
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
 workflows:
