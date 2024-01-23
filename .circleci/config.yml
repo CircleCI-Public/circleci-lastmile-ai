@@ -13,7 +13,7 @@ jobs:
       - checkout
       - run:
           name: Install
-          command: pip install --extra-index-url https://test.pypi.org/simple/ -r requirements.txt
+          command: pip install -r requirements.txt
       - run:
           name: Run assistant evals.
           command: python -m pytest --junitxml results.xml

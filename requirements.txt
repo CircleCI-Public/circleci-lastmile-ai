@@ -1,4 +1,4 @@
 pydantic>=2.1
-python-aiconfig-test==1.1.39
+python-aiconfig==1.1.15
 colorama
 termcolor
