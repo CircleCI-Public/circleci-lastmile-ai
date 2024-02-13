@@ -1,8 +1,11 @@
 {
   "name": "Book Finder",
-  "description": "Use OpenAI function calling to help recommend books",
   "schema_version": "latest",
-  "metadata": {},
+  "metadata": {
+    "parameters": {},
+    "models": {}
+  },
+  "description": "Use OpenAI function calling to help recommend books",
   "prompts": [
     {
       "name": "user_query_to_function_call",
@@ -11,61 +14,62 @@
         "model": {
           "name": "gpt-3.5-turbo",
           "settings": {
-            "model": "gpt-3.5-turbo",
             "functions": [
               {
-                "name": "list",
                 "description": "list queries books by genre, and returns a list of names of books",
+                "name": "list",
                 "parameters": {
-                  "type": "object",
                   "properties": {
                     "genre": {
-                      "type": "string",
                       "enum": [
                         "mystery",
                         "nonfiction",
                         "memoir",
                         "romance",
                         "historical"
-                      ]
+                      ],
+                      "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               },
               {
+                "description": "search queries books by their name and returns a list of book names and their ids",
                 "name": "search",
-                "description": "search queries books and returns a list",
                 "parameters": {
-                  "type": "object",
                   "properties": {
                     "name": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               },
               {
+                "description": "get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.",
                 "name": "get",
-                "description": "get returns a book's detailed information for a book.",
                 "parameters": {
-                  "type": "object",
                   "properties": {
-                    "book": {
+                    "id": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               }
             ],
+            "model": "gpt-3.5-turbo",
             "system_prompt": {
-              "role": "system",
-              "content": "Please use our book database, which you can access using functions to answer the following questions."
+              "content": "Please use our book database, which you can access using functions to answer the following questions.",
+              "role": "system"
             }
           }
         },
         "parameters": {},
         "remember_chat_context": false
-      }
+      },
+      "outputs": []
     },
     {
       "name": "function_output_to_text_response",
@@ -80,7 +84,8 @@
         },
         "parameters": {},
         "remember_chat_context": false
-      }
+      },
+      "outputs": []
     }
   ],
   "$schema": "https://json.schemastore.org/aiconfig-1.0"
