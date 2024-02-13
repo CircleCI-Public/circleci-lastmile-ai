@@ -14,7 +14,6 @@ load_dotenv()
 
 LOGGER = get_logger()
 
-
 async def main(argv: list[str]) -> int:
     try:
         user_query = argv[1]
