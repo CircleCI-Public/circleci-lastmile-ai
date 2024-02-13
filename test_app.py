@@ -57,7 +57,7 @@ async def test_function_accuracy():
         (
             {"user_query": "ID isbn123"},
             #
-            {"arguments": '{\n  "book": "isbn123"\n}', "name": "get"},
+            {"arguments": '{\n  "id": "isbn123"\n}', "name": "get"},
         ),
         (
             {"user_query": "To kill a mockingbird"},

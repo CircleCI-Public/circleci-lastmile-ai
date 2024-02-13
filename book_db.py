@@ -61,6 +61,6 @@ def call_function(name: str, args: str) -> Book | None | list[Book]:
         case "search":
             return search(args_dict["name"])
         case "get":
-            return get(args_dict["book"])
+            return get(args_dict["id"])
         case _:
             raise ValueError(f"Unknown function: {name}")
